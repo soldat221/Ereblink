@@ -2,6 +2,8 @@ package com.ereblink.backend.files
 
 import com.ereblink.backend.auth.dto.FileDetailDto
 import com.ereblink.backend.auth.dto.FileItemDto
+import com.ereblink.backend.shares.ShareService
+import com.ereblink.backend.shares.dto.ShareListItemDto
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -14,7 +16,8 @@ import java.nio.charset.StandardCharsets
 @RestController
 @RequestMapping("/api/files")
 class FileController(
-    private val fileService: FileService
+    private val fileService: FileService,
+    private val shareService: ShareService
 ) {
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
@@ -57,4 +60,8 @@ class FileController(
     fun deleteMine(auth: Authentication, @PathVariable id: Long) {
         fileService.deleteMine(auth.name, id)
     }
+
+    @GetMapping("/{id}/shares")
+    fun listSharesForFile(auth: Authentication, @PathVariable id: Long): List<ShareListItemDto> =
+        shareService.listSharesForFile(auth.name, id)
 }

@@ -36,3 +36,13 @@ data class PublicShareInfoResponse(
     val createdAt: Instant,
     val expiresAt: Instant?
 )
+
+data class ShareListItemDto(
+    val id: Long,
+    val code: String,
+    val accessType: AccessType,
+    val expiresAt: Instant?,
+    val createdAt: Instant,
+    val fileId: Long,
+    val fileName: String
+)

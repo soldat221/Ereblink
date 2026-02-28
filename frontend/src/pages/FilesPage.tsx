@@ -96,6 +96,10 @@ export default function FilesPage() {
         <div style={{ padding: 16, maxWidth: 900, margin: "0 auto" }}>
             <h2>Moje soubory</h2>
 
+            <div style={{ marginBottom: 12 }}>
+                <Link to="/shares" style={{ marginLeft: 12 }}>Moje share linky</Link>
+            </div>
+
             <ApiAlert
                 type={msg === "Soubor nahrán" || msg === "Soubor smazán" ? "success" : "error"}
                 message={msg}

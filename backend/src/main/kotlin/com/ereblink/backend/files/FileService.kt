@@ -2,6 +2,9 @@ package com.ereblink.backend.files
 
 import com.ereblink.backend.auth.dto.FileDetailDto
 import com.ereblink.backend.auth.dto.FileItemDto
+import com.ereblink.backend.logs.DownloadLogRepository
+import com.ereblink.backend.shares.ShareLinkRepository
+import com.ereblink.backend.shares.SharePermissionRepository
 import com.ereblink.backend.users.UserRepository
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -18,7 +21,10 @@ data class FileDownload(
 @Service
 class FileService(
     private val storedFileRepository: StoredFileRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val shareLinkRepository: ShareLinkRepository,
+    private val sharePermissionRepository: SharePermissionRepository,
+    private val downloadLogRepository: DownloadLogRepository,
 ) {
 
     @Transactional
@@ -81,6 +87,17 @@ class FileService(
         if (f.owner.username != currentUsername) {
             throw IllegalArgumentException("Nemáš oprávnění k tomuto souboru")
         }
+
+        val shares = shareLinkRepository.findAllByFileIdOrderByCreatedAtDesc(id)
+
+        shares.forEach { s ->
+            val shareId = s.id!!
+            downloadLogRepository.deleteAllByShareLinkId(shareId)
+            sharePermissionRepository.deleteAllByShareLinkId(shareId)
+            shareLinkRepository.delete(s)
+        }
+
+        downloadLogRepository.deleteAllByFileId(id)
 
         storedFileRepository.delete(f)
     }

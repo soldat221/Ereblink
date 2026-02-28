@@ -4,6 +4,7 @@ import FilesPage from "./pages/FilesPage";
 import FileDetailPage from "./pages/FileDetailPage";
 import SharedAccessPage from "./pages/SharedAccessPage";
 import AdminPage from "./pages/AdminPage";
+import MySharesPage from "./pages/MySharesPage";
 import React from "react";
 
 type ProtectedRouteProps = { children: React.ReactNode };
@@ -32,6 +33,15 @@ export default function App() {
                 element={
                     <ProtectedRoute>
                         <FileDetailPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/shares"
+                element={
+                    <ProtectedRoute>
+                        <MySharesPage />
                     </ProtectedRoute>
                 }
             />

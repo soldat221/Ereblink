@@ -8,6 +8,7 @@ type Props = {
     open: boolean;
     fileId: number;
     onClose: () => void;
+    onCreated?: () => void;
 };
 
 type ShareCreatedResponse = {
@@ -17,7 +18,7 @@ type ShareCreatedResponse = {
     expiresAt: string | null;
 };
 
-export default function ShareDialog({ open, fileId, onClose }: Props) {
+export default function ShareDialog({ open, fileId, onClose, onCreated }: Props) {
     const [accessType, setAccessType] = useState<AccessType>("PUBLIC");
     const [expiresInHours, setExpiresInHours] = useState<string>("24");
     const [noExpiry, setNoExpiry] = useState(false);
@@ -71,6 +72,7 @@ export default function ShareDialog({ open, fileId, onClose }: Props) {
             const res = await apiClient.post<ShareCreatedResponse>("/shares", payload);
             setCreated(res.data);
             setMsg("Share vytvořen");
+            onCreated?.();
         } catch (e: any) {
             setMsg(e?.response?.data?.message ?? e?.message ?? "Nepodařilo se vytvořit share");
         } finally {

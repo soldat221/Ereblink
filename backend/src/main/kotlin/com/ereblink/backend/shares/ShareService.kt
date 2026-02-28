@@ -6,6 +6,7 @@ import com.ereblink.backend.logs.DownloadLogRepository
 import com.ereblink.backend.shares.dto.CreateShareRequest
 import com.ereblink.backend.shares.dto.ShareCreatedResponse
 import com.ereblink.backend.shares.dto.PublicShareInfoResponse
+import com.ereblink.backend.shares.dto.ShareListItemDto
 import com.ereblink.backend.users.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -101,6 +102,55 @@ class ShareService(
             accessType = saved.accessType,
             expiresAt = saved.expiresAt
         )
+    }
+
+    @Transactional(readOnly = true)
+    fun listSharesForFile(currentUsername: String, fileId: Long): List<ShareListItemDto> {
+        // jen share linky souboru, které vytvořil aktuální uživatel (vlastník souboru)
+        val shares = shareLinkRepository.findAllByFileIdAndCreatedByUsernameOrderByCreatedAtDesc(fileId, currentUsername)
+
+        return shares.map { s ->
+            ShareListItemDto(
+                id = s.id!!,
+                code = s.code,
+                accessType = s.accessType,
+                expiresAt = s.expiresAt,
+                createdAt = s.createdAt,
+                fileId = s.file.id!!,
+                fileName = s.file.originalName
+            )
+        }
+    }
+
+    @Transactional(readOnly = true)
+    fun listMyShares(currentUsername: String): List<ShareListItemDto> {
+        val shares = shareLinkRepository.findAllByCreatedByUsernameOrderByCreatedAtDesc(currentUsername)
+        return shares.map { s ->
+            ShareListItemDto(
+                id = s.id!!,
+                code = s.code,
+                accessType = s.accessType,
+                expiresAt = s.expiresAt,
+                createdAt = s.createdAt,
+                fileId = s.file.id!!,
+                fileName = s.file.originalName
+            )
+        }
+    }
+
+    @Transactional
+    fun deleteShare(currentUsername: String, shareId: Long) {
+        val share = shareLinkRepository.findById(shareId)
+            .orElseThrow { IllegalArgumentException("Share nenalezen") }
+
+        // mazat může jen ten, kdo ho vytvořil (typicky vlastník souboru)
+        if (share.createdBy.username != currentUsername) {
+            throw IllegalArgumentException("Nemáš oprávnění smazat tento share")
+        }
+
+        downloadLogRepository.deleteAllByShareLinkId(shareId)
+        sharePermissionRepository.deleteAllByShareLinkId(shareId)
+        shareLinkRepository.delete(share)
     }
 
     @Transactional(readOnly = true)
