@@ -1,0 +1,36 @@
+#spring:
+#  application:
+#    name: backend
+
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/fileshare
+    username: fileshare
+    password: fileshare
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.springframework.security: info
+
+app:
+  jwt:
+    issuer: "fileshare"
+    secret: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_AT_LEAST_32_CHARS"
+    accessTokenMinutes: 60
