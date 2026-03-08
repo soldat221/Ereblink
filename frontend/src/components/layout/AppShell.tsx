@@ -1,5 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
+import ThemeToggle from "../ThemeToggle";
+import { useTheme } from "../../hooks/useTheme";
 
 type NavItem = {
     to: string;
@@ -8,6 +10,7 @@ type NavItem = {
 
 export default function AppShell() {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
 
     const token = localStorage.getItem("accessToken");
     const role = localStorage.getItem("role");
@@ -55,9 +58,13 @@ export default function AppShell() {
                     {token && (
                         <div className="app-shell__userbar">
                             <span className="pill">{username}</span>
-                            <button type="button" className="btn btn--ghost" onClick={logout}>
-                                Odhlásit
-                            </button>
+                            <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                            <button type="button" className="btn btn--ghost" onClick={logout}>Odhlásit</button>
+                        </div>
+                    )}
+                    {!token && (
+                        <div className="app-shell__userbar">
+                            <ThemeToggle theme={theme} onToggle={toggleTheme} />
                         </div>
                     )}
                 </div>

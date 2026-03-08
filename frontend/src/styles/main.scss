@@ -3,6 +3,8 @@
 :root {
   --bg-0: #f6f0e9;
   --bg-1: #f4e4d1;
+  --bg-2: #f8d9b5;
+  --bg-3: #e8be96;
   --panel: #fff8f1;
   --panel-strong: #fff3e6;
   --line: #e2cbb4;
@@ -14,6 +16,64 @@
   --ok: #2c7a4b;
   --danger: #b5412f;
   --shadow: 0 14px 32px rgba(90, 47, 18, 0.14);
+  --header-bg: rgba(255, 244, 230, 0.9);
+  --header-line: rgba(206, 152, 102, 0.3);
+  --control-bg: #fffdfb;
+  --control-border: #d8bca3;
+  --control-focus: rgba(223, 145, 83, 0.25);
+  --table-line: #ead6c1;
+  --dialog-backdrop: rgba(34, 19, 11, 0.4);
+  --dialog-bg: #fff8f2;
+  --dialog-border: #dfc2a8;
+  --nav-active-bg: #fff5ea;
+  --nav-active-border: #e3ae7f;
+  --btn-primary-bg: #fff6ed;
+  --btn-primary-border: var(--brand);
+  --btn-primary-text: #8a400f;
+  --btn-ghost-bg: transparent;
+  --btn-ghost-border: #c5865b;
+  --btn-ghost-text: var(--accent);
+  --btn-danger-bg: #fff1ef;
+  --btn-danger-border: #d19188;
+  --btn-danger-text: var(--danger);
+}
+
+[data-theme="dark"] {
+  --bg-0: #2e2825;
+  --bg-1: #231f1d;
+  --bg-2: #4a4038;
+  --bg-3: #3a322d;
+  --panel: #37302c;
+  --panel-strong: #302925;
+  --line: #68584e;
+  --text: #f4e8dd;
+  --text-muted: #d6c0af;
+  --brand: #eca05b;
+  --brand-strong: #ce7f38;
+  --accent: #ffd7b4;
+  --ok: #8fdaac;
+  --danger: #ff9586;
+  --shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+  --header-bg: rgba(44, 38, 35, 0.88);
+  --header-line: rgba(235, 165, 103, 0.2);
+  --control-bg: #3a332f;
+  --control-border: #79675c;
+  --control-focus: rgba(236, 160, 91, 0.28);
+  --table-line: #564940;
+  --dialog-backdrop: rgba(18, 14, 12, 0.62);
+  --dialog-bg: #332c28;
+  --dialog-border: #756359;
+  --nav-active-bg: #463a34;
+  --nav-active-border: #a97a59;
+  --btn-primary-bg: #4a3b33;
+  --btn-primary-border: #eca05b;
+  --btn-primary-text: #ffe4c8;
+  --btn-ghost-bg: #3c322d;
+  --btn-ghost-border: #8b7467;
+  --btn-ghost-text: #f5d2b2;
+  --btn-danger-bg: #4a322f;
+  --btn-danger-border: #bf7f76;
+  --btn-danger-text: #ffcdc5;
 }
 
 * {
@@ -32,9 +92,10 @@ body {
   font-family: "Plus Jakarta Sans", "Avenir Next", "Trebuchet MS", sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at 15% -10%, #f8d9b5 0, transparent 40%),
-    radial-gradient(circle at 85% -25%, #e8be96 0, transparent 35%),
+    radial-gradient(circle at 15% -10%, var(--bg-2) 0, transparent 40%),
+    radial-gradient(circle at 85% -25%, var(--bg-3) 0, transparent 35%),
     linear-gradient(155deg, var(--bg-0), var(--bg-1));
+  transition: background 0.3s ease, color 0.2s ease;
 }
 
 a {
@@ -54,8 +115,8 @@ a {
     top: 0;
     z-index: 10;
     backdrop-filter: blur(12px);
-    background: rgba(255, 244, 230, 0.9);
-    border-bottom: 1px solid rgba(206, 152, 102, 0.3);
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--header-line);
   }
 
   &__header-content {
@@ -84,8 +145,8 @@ a {
     color: var(--text-muted);
 
     &--active {
-      border-color: #e3ae7f;
-      background: #fff5ea;
+      border-color: var(--nav-active-border);
+      background: var(--nav-active-bg);
       color: var(--accent);
       font-weight: 700;
     }
@@ -141,6 +202,12 @@ a {
   border: 1px solid #f3c69f;
   font-size: 0.8rem;
   font-weight: 700;
+}
+
+[data-theme="dark"] .pill {
+  background: #3a281d;
+  border-color: #7a553f;
+  color: #ffd8b3;
 }
 
 .page-header {
@@ -202,25 +269,34 @@ input[type="number"],
 input[type="datetime-local"],
 input[type="file"] {
   width: 100%;
-  border: 1px solid #d8bca3;
+  border: 1px solid var(--control-border);
   border-radius: 0.75rem;
   padding: 0.7rem 0.8rem;
   font: inherit;
   color: var(--text);
-  background: #fffdfb;
+  background: var(--control-bg);
 }
 
 .field:focus,
 select:focus,
 input:focus {
-  outline: 3px solid rgba(223, 145, 83, 0.25);
-  border-color: #d68448;
+  outline: 3px solid var(--control-focus);
+  border-color: var(--brand-strong);
+}
+
+input[type="file"]::file-selector-button {
+  border: 1px solid var(--btn-ghost-border);
+  background: var(--btn-ghost-bg);
+  color: var(--btn-ghost-text);
+  border-radius: 0.55rem;
+  padding: 0.42rem 0.65rem;
+  margin-right: 0.7rem;
 }
 
 $buttons: (
-  "primary": (#fff6ed, var(--brand), #8a400f),
-  "ghost": (transparent, #c5865b, var(--accent)),
-  "danger": (#fff1ef, #d19188, var(--danger))
+  "primary": (var(--btn-primary-bg), var(--btn-primary-border), var(--btn-primary-text)),
+  "ghost": (var(--btn-ghost-bg), var(--btn-ghost-border), var(--btn-ghost-text)),
+  "danger": (var(--btn-danger-bg), var(--btn-danger-border), var(--btn-danger-text))
 );
 
 .btn {
@@ -278,6 +354,24 @@ $alerts: (
   }
 }
 
+[data-theme="dark"] .alert--error {
+  background: #4a302d;
+  border-color: #9b665f;
+  color: #ffc5bc;
+}
+
+[data-theme="dark"] .alert--success {
+  background: #2f4238;
+  border-color: #5d9b79;
+  color: #c7f3d9;
+}
+
+[data-theme="dark"] .alert--info {
+  background: #44362e;
+  border-color: #a37a57;
+  color: #ffdeb9;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -291,7 +385,7 @@ $alerts: (
   td {
     text-align: left;
     padding: 0.72rem;
-    border-bottom: 1px solid #ead6c1;
+    border-bottom: 1px solid var(--table-line);
     vertical-align: top;
   }
 
@@ -334,7 +428,7 @@ $alerts: (
 .dialog-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(34, 19, 11, 0.4);
+  background: var(--dialog-backdrop);
   display: grid;
   place-items: center;
   padding: 1rem;
@@ -343,8 +437,8 @@ $alerts: (
 
 .dialog {
   width: min(34rem, 100%);
-  background: #fff8f2;
-  border: 1px solid #dfc2a8;
+  background: var(--dialog-bg);
+  border: 1px solid var(--dialog-border);
   border-radius: 1rem;
   box-shadow: 0 18px 40px rgba(59, 30, 15, 0.28);
   padding: 1rem;
