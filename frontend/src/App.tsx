@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import React from "react";
+import AppShell from "./components/layout/AppShell";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -8,7 +10,6 @@ import SharedAccessPage from "./pages/SharedAccessPage";
 import AdminPage from "./pages/AdminPage";
 import MySharesPage from "./pages/MySharesPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
-import React from "react";
 
 type ProtectedRouteProps = { children: React.ReactNode };
 
@@ -27,56 +28,59 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
     return (
         <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/" element={<AppShell />}>
+                <Route index element={<HomePage />} />
+                <Route path="login" element={<LoginPage />} />
+                <Route path="register" element={<RegisterPage />} />
 
-            <Route
-                path="/files"
-                element={
-                    <ProtectedRoute>
-                        <FilesPage />
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="files"
+                    element={
+                        <ProtectedRoute>
+                            <FilesPage />
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/files/:id"
-                element={
-                    <ProtectedRoute>
-                        <FileDetailPage />
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="files/:id"
+                    element={
+                        <ProtectedRoute>
+                            <FileDetailPage />
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/shares"
-                element={
-                    <ProtectedRoute>
-                        <MySharesPage />
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="shares"
+                    element={
+                        <ProtectedRoute>
+                            <MySharesPage />
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/admin"
-                element={
-                    <AdminRoute>
-                        <AdminPage />
-                    </AdminRoute>
-                }
-            />
+                <Route
+                    path="admin"
+                    element={
+                        <AdminRoute>
+                            <AdminPage />
+                        </AdminRoute>
+                    }
+                />
 
-            <Route
-                path="/admin/users"
-                element={
-                    <AdminRoute>
-                        <AdminUsersPage />
-                    </AdminRoute>
-                }
-            />
+                <Route
+                    path="admin/users"
+                    element={
+                        <AdminRoute>
+                            <AdminUsersPage />
+                        </AdminRoute>
+                    }
+                />
 
-            <Route path="/s/:code" element={<SharedAccessPage />} />
+                <Route path="s/:code" element={<SharedAccessPage />} />
+            </Route>
+
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );

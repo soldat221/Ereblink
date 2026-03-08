@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import ApiAlert from "../components/ApiAlert";
 import { apiClient } from "../api/apiClient";
+import PageHeader from "../components/PageHeader";
+import { getApiErrorMessage } from "../utils/apiError";
 
 type PublicShareInfoResponse = {
     code: string;
@@ -21,52 +23,47 @@ export default function SharedAccessPage() {
 
     const token = localStorage.getItem("accessToken");
 
-    async function load() {
+    const load = useCallback(async () => {
         setMsg(null);
         setInfo(null);
 
-        // 1) zkus veřejné info
         try {
             const res = await apiClient.get<PublicShareInfoResponse>(`/public/share/${code}`);
             setInfo(res.data);
             setMode("public");
             return;
-        } catch (e: any) {
-            const m = e?.response?.data?.message ?? "Share nelze načíst";
-            // když není veřejné, zkus auth variantu pokud je token
+        } catch (e: unknown) {
+            const m = getApiErrorMessage(e, "Share nelze načíst");
             if (!token) {
-                setMsg(m + " (Pokud je share omezený, přihlas se.)");
+                setMsg(`${m} (Pokud je share omezený, přihlas se.)`);
                 return;
             }
         }
 
-        // 2) zkus autentizované info
         try {
             const res = await apiClient.get<PublicShareInfoResponse>(`/share/${code}`);
             setInfo(res.data);
             setMode("auth");
-        } catch (e: any) {
-            setMsg(e?.response?.data?.message ?? "Share nelze načíst");
+        } catch (e: unknown) {
+            setMsg(getApiErrorMessage(e, "Share nelze načíst"));
         }
-    }
+    }, [code, token]);
 
     useEffect(() => {
         if (!code) return;
-        load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [code]);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        void load();
+    }, [code, load]);
 
     async function download() {
         setMsg(null);
         try {
-            const url =
-                mode === "public" ? `/public/share/${code}/download` : `/share/${code}/download`;
-
+            const url = mode === "public" ? `/public/share/${code}/download` : `/share/${code}/download`;
             const res = await apiClient.get(url, { responseType: "blob" });
 
             const cd = res.headers["content-disposition"] as string | undefined;
             let filename = info?.originalName ?? "download.bin";
-            const match = cd?.match(/filename\*\=UTF-8''([^;]+)/i);
+            const match = cd?.match(/filename\*=UTF-8''([^;]+)/i);
             if (match?.[1]) filename = decodeURIComponent(match[1]);
 
             const blobUrl = URL.createObjectURL(res.data);
@@ -77,53 +74,53 @@ export default function SharedAccessPage() {
             a.click();
             a.remove();
             URL.revokeObjectURL(blobUrl);
-        } catch (e: any) {
-            setMsg(e?.response?.data?.message ?? "Download selhal");
+        } catch (e: unknown) {
+            setMsg(getApiErrorMessage(e, "Download selhal"));
         }
     }
 
     return (
-        <div style={{ padding: 16, maxWidth: 760, margin: "0 auto" }}>
-            <h2>Sdílený soubor</h2>
-
+        <div className="stack">
+            <PageHeader title="Sdílený soubor" subtitle="Přístup přes veřejný nebo autorizovaný režim." />
             <ApiAlert type={msg ? "error" : "info"} message={msg} onClose={() => setMsg(null)} />
 
-            {!token && (
-                <div style={{ marginBottom: 12, fontSize: 14 }}>
-                    <span>Nejsi přihlášený. </span>
-                    <Link to="/login">Přihlásit se</Link>
-                    <span> (pokud je share omezený).</span>
-                </div>
-            )}
+            {!token ? (
+                <section className="panel">
+                    Nejsi přihlášený. <Link to="/login">Přihlásit se</Link> (pokud je share omezený).
+                </section>
+            ) : null}
 
             {!info ? (
-                <div>Načítám…</div>
+                <section className="panel">Načítám…</section>
             ) : (
-                <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 16 }}>
-                    <div>
-                        <b>Soubor:</b> {info.originalName}
-                    </div>
-                    <div>
-                        <b>Typ:</b> {info.contentType}
-                    </div>
-                    <div>
-                        <b>Velikost:</b> {info.size} B
-                    </div>
-                    <div>
-                        <b>Vytvořeno:</b> {new Date(info.createdAt).toLocaleString()}
-                    </div>
-                    {info.expiresAt && (
+                <section className="panel stack">
+                    <div className="meta-list">
                         <div>
-                            <b>Expiruje:</b> {new Date(info.expiresAt).toLocaleString()}
+                            <b>Soubor:</b> <span>{info.originalName}</span>
                         </div>
-                    )}
-                    <div style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center" }}>
-                        <button onClick={download}>Stáhnout</button>
-                        <span style={{ fontSize: 12, opacity: 0.7 }}>
-              Režim: {mode === "public" ? "veřejný" : "autentizovaný"}
-            </span>
+                        <div>
+                            <b>Typ:</b> <span>{info.contentType}</span>
+                        </div>
+                        <div>
+                            <b>Velikost:</b> <span>{info.size} B</span>
+                        </div>
+                        <div>
+                            <b>Vytvořeno:</b> <span>{new Date(info.createdAt).toLocaleString()}</span>
+                        </div>
+                        {info.expiresAt ? (
+                            <div>
+                                <b>Expiruje:</b> <span>{new Date(info.expiresAt).toLocaleString()}</span>
+                            </div>
+                        ) : null}
                     </div>
-                </div>
+
+                    <div className="row">
+                        <button type="button" className="btn btn--primary" onClick={download}>
+                            Stáhnout
+                        </button>
+                        <span className="pill">Režim: {mode === "public" ? "veřejný" : "autentizovaný"}</span>
+                    </div>
+                </section>
             )}
         </div>
     );

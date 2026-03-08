@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import ApiAlert from "../components/ApiAlert";
+import PageHeader from "../components/PageHeader";
 import { apiClient } from "../api/apiClient";
+import { getApiErrorMessage } from "../utils/apiError";
 
 type RegisterResponse = {
     accessToken: string;
@@ -31,37 +33,38 @@ export default function RegisterPage() {
             localStorage.setItem("role", res.data.role);
 
             nav("/files");
-        } catch (e: any) {
-            setMsg(e?.response?.data?.message ?? "Registrace selhala");
+        } catch (e: unknown) {
+            setMsg(getApiErrorMessage(e, "Registrace selhala"));
         }
     }
 
     return (
-        <div style={{ maxWidth: 420, margin: "40px auto" }}>
-            <h2>Registrace</h2>
+        <div className="stack auth-card">
+            <PageHeader title="Registrace" subtitle="Vytvoř si účet a začni sdílet během pár sekund." />
+            <section className="panel stack">
+                <ApiAlert type="error" message={msg} onClose={() => setMsg(null)} />
 
-            <ApiAlert type="error" message={msg} onClose={() => setMsg(null)} />
+                <form onSubmit={register} className="stack">
+                    <input
+                        className="field"
+                        placeholder="username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                    />
 
-            <form onSubmit={register} style={{ display: "grid", gap: 12 }}>
-                <input
-                    placeholder="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
+                    <input
+                        className="field"
+                        placeholder="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
 
-                <input
-                    placeholder="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
+                    <button type="submit" className="btn btn--primary">Registrovat</button>
+                </form>
 
-                <button type="submit">Registrovat</button>
-            </form>
-
-            <div style={{ marginTop: 10 }}>
-                <Link to="/login">Už máš účet? Přihlas se</Link>
-            </div>
+                <Link className="link-muted" to="/login">Už máš účet? Přihlas se</Link>
+            </section>
         </div>
     );
 }

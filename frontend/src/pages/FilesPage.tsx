@@ -4,6 +4,8 @@ import ApiAlert from "../components/ApiAlert";
 import ConfirmDialog from "../components/ConfirmDialog";
 import type { FileItemDto } from "../types/files";
 import { Link } from "react-router-dom";
+import PageHeader from "../components/PageHeader";
+import { getApiErrorMessage } from "../utils/apiError";
 
 export default function FilesPage() {
     const [files, setFiles] = useState<FileItemDto[]>([]);
@@ -19,7 +21,7 @@ export default function FilesPage() {
     }
 
     useEffect(() => {
-        load().catch((e: any) => setMsg(e?.response?.data?.message ?? "Chyba při načítání souborů"));
+        load().catch((e: unknown) => setMsg(getApiErrorMessage(e, "Chyba při načítání souborů")));
     }, []);
 
     async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -39,11 +41,11 @@ export default function FilesPage() {
 
             await load();
             setMsg("Soubor nahrán");
-        } catch (err: any) {
-            setMsg(err?.response?.data?.message ?? "Upload selhal");
+        } catch (err: unknown) {
+            setMsg(getApiErrorMessage(err, "Upload selhal"));
         } finally {
             setBusy(false);
-            e.target.value = ""; // aby šlo nahrát znovu stejný soubor
+            e.target.value = "";
         }
     }
 
@@ -52,10 +54,9 @@ export default function FilesPage() {
         try {
             const res = await apiClient.get(`/files/${id}/download`, { responseType: "blob" });
 
-            // Zkus vytáhnout filename z Content-Disposition
             const cd = res.headers["content-disposition"] as string | undefined;
             let filename = "download.bin";
-            const match = cd?.match(/filename\*\=UTF-8''([^;]+)/i);
+            const match = cd?.match(/filename\*=UTF-8''([^;]+)/i);
             if (match?.[1]) filename = decodeURIComponent(match[1]);
 
             const url = URL.createObjectURL(res.data);
@@ -66,8 +67,8 @@ export default function FilesPage() {
             a.click();
             a.remove();
             URL.revokeObjectURL(url);
-        } catch (err: any) {
-            setMsg(err?.response?.data?.message ?? "Download selhal");
+        } catch (err: unknown) {
+            setMsg(getApiErrorMessage(err, "Download selhal"));
         }
     }
 
@@ -85,20 +86,24 @@ export default function FilesPage() {
             await apiClient.delete(`/files/${toDeleteId}`);
             await load();
             setMsg("Soubor smazán");
-        } catch (err: any) {
-            setMsg(err?.response?.data?.message ?? "Smazání selhalo");
+        } catch (err: unknown) {
+            setMsg(getApiErrorMessage(err, "Smazání selhalo"));
         } finally {
             setToDeleteId(null);
         }
     }
 
     return (
-        <div style={{ padding: 16, maxWidth: 900, margin: "0 auto" }}>
-            <h2>Moje soubory</h2>
-
-            <div style={{ marginBottom: 12 }}>
-                <Link to="/shares" style={{ marginLeft: 12 }}>Moje share linky</Link>
-            </div>
+        <div className="stack">
+            <PageHeader
+                title="Moje soubory"
+                subtitle="Nahrávání, stahování a správa souborů."
+                rightSlot={
+                    <Link className="link-muted" to="/shares">
+                        Moje share linky
+                    </Link>
+                }
+            />
 
             <ApiAlert
                 type={msg === "Soubor nahrán" || msg === "Soubor smazán" ? "success" : "error"}
@@ -106,47 +111,59 @@ export default function FilesPage() {
                 onClose={() => setMsg(null)}
             />
 
-            <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
-                <input type="file" onChange={onUpload} disabled={busy} />
-                {busy && <span>Nahrávám…</span>}
-            </div>
+            <section className="panel stack">
+                <div className="row">
+                    <input type="file" onChange={onUpload} disabled={busy} />
+                    {busy ? <span className="page-subtitle">Nahrávám…</span> : null}
+                </div>
+            </section>
 
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                <tr>
-                    <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: 8 }}>Název</th>
-                    <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: 8 }}>Typ</th>
-                    <th style={{ textAlign: "right", borderBottom: "1px solid #ccc", padding: 8 }}>Velikost</th>
-                    <th style={{ borderBottom: "1px solid #ccc", padding: 8 }}>Akce</th>
-                </tr>
-                </thead>
-                <tbody>
-                {files.map((f) => (
-                    <tr key={f.id}>
-                        <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                            <Link to={`/files/${f.id}`}>{f.originalName}</Link>
-                        </td>
-                        <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{f.contentType}</td>
-                        <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "right" }}>
-                            {f.size} B
-                        </td>
-                        <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
-                            <button onClick={() => downloadFile(f.id)} style={{ marginRight: 8 }}>
-                                Stáhnout
-                            </button>
-                            <button onClick={() => askDelete(f.id)}>Smazat</button>
-                        </td>
-                    </tr>
-                ))}
-                {files.length === 0 && (
-                    <tr>
-                        <td colSpan={4} style={{ padding: 12 }}>
-                            Zatím tu nic není.
-                        </td>
-                    </tr>
-                )}
-                </tbody>
-            </table>
+            <section className="panel table-wrap">
+                <table className="data-table">
+                    <thead>
+                        <tr>
+                            <th>Název</th>
+                            <th>Typ</th>
+                            <th>Velikost</th>
+                            <th>Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {files.map((f) => (
+                            <tr key={f.id}>
+                                <td>
+                                    <Link to={`/files/${f.id}`}>{f.originalName}</Link>
+                                </td>
+                                <td>{f.contentType}</td>
+                                <td>{f.size} B</td>
+                                <td className="actions">
+                                    <div className="row" style={{ justifyContent: "flex-end" }}>
+                                        <button
+                                            type="button"
+                                            className="btn btn--ghost"
+                                            onClick={() => downloadFile(f.id)}
+                                        >
+                                            Stáhnout
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn--danger"
+                                            onClick={() => askDelete(f.id)}
+                                        >
+                                            Smazat
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                        {files.length === 0 ? (
+                            <tr>
+                                <td colSpan={4}>Zatím tu nic není.</td>
+                            </tr>
+                        ) : null}
+                    </tbody>
+                </table>
+            </section>
 
             <ConfirmDialog
                 open={confirmOpen}

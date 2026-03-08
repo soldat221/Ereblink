@@ -4,6 +4,8 @@ import ApiAlert from "../components/ApiAlert";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { apiClient } from "../api/apiClient";
 import type { AdminUserDto, Role } from "../types/admin";
+import PageHeader from "../components/PageHeader";
+import { getApiErrorMessage } from "../utils/apiError";
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<AdminUserDto[]>([]);
@@ -20,7 +22,7 @@ export default function AdminUsersPage() {
     }
 
     useEffect(() => {
-        load().catch((e: any) => setMsg(e?.response?.data?.message ?? "Chyba při načítání uživatelů"));
+        load().catch((e: unknown) => setMsg(getApiErrorMessage(e, "Chyba při načítání uživatelů")));
     }, []);
 
     async function setRole(id: number, role: Role) {
@@ -29,8 +31,8 @@ export default function AdminUsersPage() {
             await apiClient.put(`/admin/users/${id}/role`, { role });
             await load();
             setMsg("Role změněna");
-        } catch (e: any) {
-            setMsg(e?.response?.data?.message ?? "Změna role selhala");
+        } catch (e: unknown) {
+            setMsg(getApiErrorMessage(e, "Změna role selhala"));
         }
     }
 
@@ -40,8 +42,8 @@ export default function AdminUsersPage() {
             await apiClient.put(`/admin/users/${id}/enabled`, { enabled });
             await load();
             setMsg("Stav uživatele změněn");
-        } catch (e: any) {
-            setMsg(e?.response?.data?.message ?? "Změna stavu selhala");
+        } catch (e: unknown) {
+            setMsg(getApiErrorMessage(e, "Změna stavu selhala"));
         }
     }
 
@@ -59,19 +61,24 @@ export default function AdminUsersPage() {
             await apiClient.delete(`/admin/users/${deleteId}`);
             await load();
             setMsg("Uživatel smazán");
-        } catch (e: any) {
-            setMsg(e?.response?.data?.message ?? "Mazání selhalo");
+        } catch (e: unknown) {
+            setMsg(getApiErrorMessage(e, "Mazání selhalo"));
         } finally {
             setDeleteId(null);
         }
     }
 
     return (
-        <div style={{ padding: 16, maxWidth: 1000, margin: "0 auto" }}>
-            <h2>Správa uživatelů</h2>
-            <div style={{ marginBottom: 12 }}>
-                <Link to="/files">← Zpět</Link>
-            </div>
+        <div className="stack">
+            <PageHeader
+                title="Správa uživatelů"
+                subtitle="Role, přístupy a bezpečnostní zásahy."
+                rightSlot={
+                    <Link className="link-muted" to="/files">
+                        Zpět na soubory
+                    </Link>
+                }
+            />
 
             <ApiAlert
                 type={
@@ -83,72 +90,73 @@ export default function AdminUsersPage() {
                 onClose={() => setMsg(null)}
             />
 
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                <tr>
-                    <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: 8 }}>Username</th>
-                    <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: 8 }}>Role</th>
-                    <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: 8 }}>Enabled</th>
-                    <th style={{ borderBottom: "1px solid #ccc", padding: 8 }}>Akce</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                {users.map((u) => {
-                    const isMe = currentUsername === u.username;
-
-                    return (
-                        <tr key={u.id}>
-                            <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                                {u.username} {isMe ? "(ty)" : ""}
-                            </td>
-
-                            <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{u.role}</td>
-
-                            <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                                {u.enabled ? "ANO" : "NE"}
-                            </td>
-
-                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
-                                <button
-                                    onClick={() => setRole(u.id, u.role === "ADMIN" ? "USER" : "ADMIN")}
-                                    style={{ marginRight: 8 }}
-                                    disabled={isMe && u.role === "ADMIN"} // server taky hlídá, jen UX
-                                    title={isMe && u.role === "ADMIN" ? "Nemůžeš si odebrat admin roli" : ""}
-                                >
-                                    {u.role === "ADMIN" ? "Nastavit USER" : "Nastavit ADMIN"}
-                                </button>
-
-                                <button
-                                    onClick={() => setEnabled(u.id, !u.enabled)}
-                                    style={{ marginRight: 8 }}
-                                    disabled={isMe && u.enabled}
-                                    title={isMe && u.enabled ? "Nemůžeš zakázat sám sebe" : ""}
-                                >
-                                    {u.enabled ? "Zakázat" : "Povolit"}
-                                </button>
-
-                                <button
-                                    onClick={() => askDelete(u.id)}
-                                    disabled={isMe}
-                                    title={isMe ? "Nemůžeš smazat sám sebe" : ""}
-                                >
-                                    Smazat
-                                </button>
-                            </td>
+            <section className="panel table-wrap">
+                <table className="data-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Enabled</th>
+                            <th>Akce</th>
                         </tr>
-                    );
-                })}
+                    </thead>
 
-                {users.length === 0 && (
-                    <tr>
-                        <td colSpan={4} style={{ padding: 12 }}>
-                            Žádní uživatelé.
-                        </td>
-                    </tr>
-                )}
-                </tbody>
-            </table>
+                    <tbody>
+                        {users.map((u) => {
+                            const isMe = currentUsername === u.username;
+
+                            return (
+                                <tr key={u.id}>
+                                    <td>
+                                        {u.username} {isMe ? "(ty)" : ""}
+                                    </td>
+                                    <td>{u.role}</td>
+                                    <td>{u.enabled ? "ANO" : "NE"}</td>
+                                    <td className="actions">
+                                        <div className="row" style={{ justifyContent: "flex-end" }}>
+                                            <button
+                                                type="button"
+                                                className="btn btn--ghost"
+                                                onClick={() => setRole(u.id, u.role === "ADMIN" ? "USER" : "ADMIN")}
+                                                disabled={isMe && u.role === "ADMIN"}
+                                                title={isMe && u.role === "ADMIN" ? "Nemůžeš si odebrat admin roli" : ""}
+                                            >
+                                                {u.role === "ADMIN" ? "Nastavit USER" : "Nastavit ADMIN"}
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                className="btn btn--ghost"
+                                                onClick={() => setEnabled(u.id, !u.enabled)}
+                                                disabled={isMe && u.enabled}
+                                                title={isMe && u.enabled ? "Nemůžeš zakázat sám sebe" : ""}
+                                            >
+                                                {u.enabled ? "Zakázat" : "Povolit"}
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                className="btn btn--danger"
+                                                onClick={() => askDelete(u.id)}
+                                                disabled={isMe}
+                                                title={isMe ? "Nemůžeš smazat sám sebe" : ""}
+                                            >
+                                                Smazat
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+
+                        {users.length === 0 ? (
+                            <tr>
+                                <td colSpan={4}>Žádní uživatelé.</td>
+                            </tr>
+                        ) : null}
+                    </tbody>
+                </table>
+            </section>
 
             <ConfirmDialog
                 open={confirmOpen}

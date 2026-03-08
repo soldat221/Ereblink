@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ApiAlert from "../components/ApiAlert";
+import PageHeader from "../components/PageHeader";
 import { apiClient } from "../api/apiClient";
+import { getApiErrorMessage } from "../utils/apiError";
 
 type LoginResponse = {
     accessToken: string;
@@ -25,32 +27,40 @@ export default function LoginPage() {
             localStorage.setItem("username", res.data.username);
             localStorage.setItem("role", res.data.role);
             nav("/files");
-        } catch (err: any) {
-            setMsg(err?.response?.data?.message ?? "Přihlášení selhalo");
+        } catch (err: unknown) {
+            setMsg(getApiErrorMessage(err, "Přihlášení selhalo"));
         }
     }
 
     return (
-        <div style={{ maxWidth: 420, margin: "40px auto" }}>
-            <h2>Login</h2>
-            <ApiAlert type="error" message={msg} onClose={() => setMsg(null)} />
+        <div className="stack auth-card">
+            <PageHeader title="Přihlášení" subtitle="Přístup ke správě souborů a sdílení." />
+            <section className="panel stack">
+                <ApiAlert type="error" message={msg} onClose={() => setMsg(null)} />
 
-            <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-                <input
-                    placeholder="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    autoComplete="username"
-                />
-                <input
-                    placeholder="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                />
-                <button type="submit">Přihlásit</button>
-            </form>
+                <form onSubmit={onSubmit} className="stack">
+                    <input
+                        className="field"
+                        placeholder="username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        autoComplete="username"
+                    />
+                    <input
+                        className="field"
+                        placeholder="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        autoComplete="current-password"
+                    />
+                    <button type="submit" className="btn btn--primary">Přihlásit</button>
+                </form>
+
+                <Link className="link-muted" to="/register">
+                    Nemáš účet? Zaregistruj se
+                </Link>
+            </section>
         </div>
     );
 }

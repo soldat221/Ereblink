@@ -10,21 +10,17 @@ export default function ConfirmDialog({ open, title, text, onConfirm, onCancel }
     if (!open) return null;
 
     return (
-        <div
-            style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0,0,0,0.4)",
-                display: "grid",
-                placeItems: "center",
-            }}
-        >
-            <div style={{ background: "white", padding: 16, borderRadius: 12, width: 360 }}>
-                <h3 style={{ marginTop: 0 }}>{title}</h3>
+        <div className="dialog-backdrop" role="presentation">
+            <div className="dialog" role="dialog" aria-modal="true" aria-label={title}>
+                <h3>{title}</h3>
                 <p>{text}</p>
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                    <button onClick={onCancel}>Zrušit</button>
-                    <button onClick={onConfirm}>Potvrdit</button>
+                <div className="row" style={{ justifyContent: "flex-end" }}>
+                    <button type="button" className="btn btn--ghost" onClick={onCancel}>
+                        Zrušit
+                    </button>
+                    <button type="button" className="btn btn--danger" onClick={onConfirm}>
+                        Potvrdit
+                    </button>
                 </div>
             </div>
         </div>

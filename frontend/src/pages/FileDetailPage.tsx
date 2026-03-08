@@ -6,6 +6,8 @@ import ShareDialog from "../components/ShareDialog";
 import { apiClient } from "../api/apiClient";
 import type { FileDetailDto } from "../types/files";
 import type { ShareListItemDto } from "../types/shares";
+import PageHeader from "../components/PageHeader";
+import { getApiErrorMessage } from "../utils/apiError";
 
 export default function FileDetailPage() {
     const { id } = useParams();
@@ -37,7 +39,7 @@ export default function FileDetailPage() {
             setMsg("Neplatné ID souboru");
             return;
         }
-        load().then(loadShares).catch((e: any) => setMsg(e?.response?.data?.message ?? "Chyba při načítání detailu"));
+        load().then(loadShares).catch((e: unknown) => setMsg(getApiErrorMessage(e, "Chyba při načítání detailu")));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fileId]);
 
@@ -48,7 +50,7 @@ export default function FileDetailPage() {
 
             const cd = res.headers["content-disposition"] as string | undefined;
             let filename = detail?.originalName ?? "download.bin";
-            const match = cd?.match(/filename\*\=UTF-8''([^;]+)/i);
+            const match = cd?.match(/filename\*=UTF-8''([^;]+)/i);
             if (match?.[1]) filename = decodeURIComponent(match[1]);
 
             const url = URL.createObjectURL(res.data);
@@ -59,8 +61,8 @@ export default function FileDetailPage() {
             a.click();
             a.remove();
             URL.revokeObjectURL(url);
-        } catch (e: any) {
-            setMsg(e?.response?.data?.message ?? "Download selhal");
+        } catch (e: unknown) {
+            setMsg(getApiErrorMessage(e, "Download selhal"));
         }
     }
 
@@ -70,8 +72,8 @@ export default function FileDetailPage() {
         try {
             await apiClient.delete(`/files/${fileId}`);
             nav("/files");
-        } catch (e: any) {
-            setMsg(e?.response?.data?.message ?? "Smazání selhalo");
+        } catch (e: unknown) {
+            setMsg(getApiErrorMessage(e, "Smazání selhalo"));
         }
     }
 
@@ -84,8 +86,8 @@ export default function FileDetailPage() {
         setShareMsg("Odkaz zkopírován");
     }
 
-    function askDeleteShare(id: number) {
-        setShareToDeleteId(id);
+    function askDeleteShare(shareId: number) {
+        setShareToDeleteId(shareId);
         setShareDeleteOpen(true);
     }
 
@@ -98,58 +100,65 @@ export default function FileDetailPage() {
             await apiClient.delete(`/shares/${shareToDeleteId}`);
             await loadShares();
             setShareMsg("Share smazán");
-        } catch (e: any) {
-            setShareMsg(e?.response?.data?.message ?? "Smazání selhalo");
+        } catch (e: unknown) {
+            setShareMsg(getApiErrorMessage(e, "Smazání selhalo"));
         } finally {
             setShareToDeleteId(null);
         }
     }
 
     return (
-        <div style={{ padding: 16, maxWidth: 900, margin: "0 auto" }}>
-            <div style={{ marginBottom: 12 }}>
-                <Link to="/files">← Zpět na seznam</Link>
-            </div>
-
-            <h2>Detail souboru</h2>
-
-            <ApiAlert
-                type={msg ? "error" : "info"}
-                message={msg}
-                onClose={() => setMsg(null)}
+        <div className="stack">
+            <PageHeader
+                title="Detail souboru"
+                subtitle="Metadata, akce a správa sdílení na jednom místě."
+                rightSlot={
+                    <Link className="link-muted" to="/files">
+                        Zpět na seznam
+                    </Link>
+                }
             />
 
+            <ApiAlert type={msg ? "error" : "info"} message={msg} onClose={() => setMsg(null)} />
+
             {!detail ? (
-                <div>Načítám…</div>
+                <section className="panel">Načítám…</section>
             ) : (
-                <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 16 }}>
-                    <div style={{ display: "grid", gap: 8 }}>
-                        <div>
-                            <b>Název:</b> {detail.originalName}
+                <>
+                    <section className="panel stack">
+                        <div className="meta-list">
+                            <div>
+                                <b>Název:</b> <span>{detail.originalName}</span>
+                            </div>
+                            <div>
+                                <b>Typ:</b> <span>{detail.contentType}</span>
+                            </div>
+                            <div>
+                                <b>Velikost:</b> <span>{detail.size} B</span>
+                            </div>
+                            <div>
+                                <b>Vlastník:</b> <span>{detail.ownerUsername}</span>
+                            </div>
+                            <div>
+                                <b>Vytvořeno:</b> <span>{new Date(detail.createdAt).toLocaleString()}</span>
+                            </div>
                         </div>
-                        <div>
-                            <b>Typ:</b> {detail.contentType}
-                        </div>
-                        <div>
-                            <b>Velikost:</b> {detail.size} B
-                        </div>
-                        <div>
-                            <b>Vlastník:</b> {detail.ownerUsername}
-                        </div>
-                        <div>
-                            <b>Vytvořeno:</b> {new Date(detail.createdAt).toLocaleString()}
-                        </div>
-                    </div>
 
-                    <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-                        <button onClick={() => setShareOpen(true)}>Sdílet</button>
-                        <button onClick={download}>Stáhnout</button>
-                        <button onClick={() => setConfirmOpen(true)}>Smazat</button>
-                    </div>
+                        <div className="row">
+                            <button type="button" className="btn btn--primary" onClick={() => setShareOpen(true)}>
+                                Sdílet
+                            </button>
+                            <button type="button" className="btn btn--ghost" onClick={download}>
+                                Stáhnout
+                            </button>
+                            <button type="button" className="btn btn--danger" onClick={() => setConfirmOpen(true)}>
+                                Smazat
+                            </button>
+                        </div>
+                    </section>
 
-                    <div style={{ marginTop: 18 }}>
-                        <h3 style={{ marginTop: 0 }}>Share linky</h3>
-
+                    <section className="panel stack">
+                        <h3 style={{ margin: 0 }}>Share linky</h3>
                         <ApiAlert
                             type={shareMsg === "Share smazán" || shareMsg === "Odkaz zkopírován" ? "success" : "error"}
                             message={shareMsg}
@@ -157,35 +166,49 @@ export default function FileDetailPage() {
                         />
 
                         {shares.length === 0 ? (
-                            <div style={{ fontSize: 14, opacity: 0.8 }}>Zatím žádné share linky.</div>
+                            <div className="page-subtitle">Zatím žádné share linky.</div>
                         ) : (
-                            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
-                                <thead>
-                                <tr>
-                                    <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: 8 }}>Typ</th>
-                                    <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: 8 }}>Kód</th>
-                                    <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: 8 }}>Expirace</th>
-                                    <th style={{ borderBottom: "1px solid #ccc", padding: 8 }}>Akce</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {shares.map((s) => (
-                                    <tr key={s.id}>
-                                        <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{s.accessType}</td>
-                                        <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{s.code}</td>
-                                        <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                                            {s.expiresAt ? new Date(s.expiresAt).toLocaleString() : "bez expirace"}
-                                        </td>
-                                        <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
-                                            <button onClick={() => copyShare(s.code)} style={{ marginRight: 8 }}>Kopírovat</button>
-                                            <button onClick={() => askDeleteShare(s.id)}>Smazat</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                            <div className="table-wrap">
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Typ</th>
+                                            <th>Kód</th>
+                                            <th>Expirace</th>
+                                            <th>Akce</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {shares.map((s) => (
+                                            <tr key={s.id}>
+                                                <td>{s.accessType}</td>
+                                                <td>{s.code}</td>
+                                                <td>{s.expiresAt ? new Date(s.expiresAt).toLocaleString() : "bez expirace"}</td>
+                                                <td className="actions">
+                                                    <div className="row" style={{ justifyContent: "flex-end" }}>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn--ghost"
+                                                            onClick={() => copyShare(s.code)}
+                                                        >
+                                                            Kopírovat
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn--danger"
+                                                            onClick={() => askDeleteShare(s.id)}
+                                                        >
+                                                            Smazat
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
-                    </div>
+                    </section>
 
                     <ConfirmDialog
                         open={shareDeleteOpen}
@@ -194,10 +217,10 @@ export default function FileDetailPage() {
                         onCancel={() => setShareDeleteOpen(false)}
                         onConfirm={confirmDeleteShare}
                     />
-                </div>
+                </>
             )}
 
-            {detail && (
+            {detail ? (
                 <ShareDialog
                     open={shareOpen}
                     fileId={detail.id}
@@ -207,7 +230,7 @@ export default function FileDetailPage() {
                         setShareOpen(false);
                     }}
                 />
-            )}
+            ) : null}
 
             <ConfirmDialog
                 open={confirmOpen}

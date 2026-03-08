@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import PageHeader from "../components/PageHeader";
 
 export default function HomePage() {
     const navigate = useNavigate();
@@ -26,78 +27,65 @@ export default function HomePage() {
     }
 
     return (
-        <div style={{ padding: 20, maxWidth: 800, margin: "0 auto" }}>
-            <h1>Ereblink</h1>
+        <div className="stack">
+            <PageHeader
+                title="Sdílení souborů bez chaosu"
+                subtitle="Nahraj, sdílej a spravuj přístupy jednoduše z mobilu i desktopu."
+            />
 
-            <p>
-                Aplikace pro sdílení souborů pomocí sdílecích kódů.
-            </p>
+            <section className="panel hero">
+                <form onSubmit={openShare} className="stack">
+                    <label className="stack">
+                        <span>Otevřít sdílený soubor</span>
+                        <input
+                            className="field"
+                            placeholder="Vlož share kód nebo celý odkaz"
+                            value={shareCode}
+                            onChange={(e) => setShareCode(e.target.value)}
+                        />
+                    </label>
 
-            {/* vložení share kódu */}
-            <div
-                style={{
-                    border: "1px solid #ddd",
-                    borderRadius: 12,
-                    padding: 16,
-                    marginTop: 20,
-                }}
-            >
-                <h3>Otevřít sdílený soubor</h3>
-
-                <form onSubmit={openShare} style={{ display: "flex", gap: 8 }}>
-                    <input
-                        placeholder="Zadej share kód"
-                        value={shareCode}
-                        onChange={(e) => setShareCode(e.target.value)}
-                        style={{ flex: 1 }}
-                    />
-
-                    <button type="submit">Otevřít</button>
-                </form>
-
-                <div style={{ marginTop: 8, fontSize: 13, opacity: 0.7 }}>
-                    Můžeš vložit kód nebo odkaz.
-                </div>
-            </div>
-
-            {/* nepřihlášený */}
-            {!token && (
-                <div style={{ marginTop: 25 }}>
-                    <Link to="/login">
-                        <button style={{ marginRight: 10 }}>Přihlásit se</button>
-                    </Link>
-
-                    <Link to="/register">
-                        <button>Registrovat</button>
-                    </Link>
-                </div>
-            )}
-
-            {/* přihlášený */}
-            {token && (
-                <div style={{ marginTop: 25 }}>
-                    <p>
-                        Přihlášen jako: <b>{username}</b>
-                    </p>
-
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                        <Link to="/files">
-                            <button>Moje soubory</button>
-                        </Link>
-
-                        <Link to="/shares">
-                            <button>Moje share linky</button>
-                        </Link>
-
-                        {role === "ADMIN" && (
-                            <Link to="/admin/users">
-                                <button>Admin panel</button>
-                            </Link>
-                        )}
-
-                        <button onClick={logout}>Odhlásit se</button>
+                    <div className="hero__cta">
+                        <button type="submit" className="btn btn--primary">
+                            Otevřít sdílení
+                        </button>
                     </div>
-                </div>
+                </form>
+                <p className="page-subtitle">Tip: stačí vložit i celý link, aplikace si kód vytáhne sama.</p>
+            </section>
+
+            {!token ? (
+                <section className="panel stack">
+                    <h2 style={{ margin: 0 }}>Začni během minuty</h2>
+                    <div className="hero__cta">
+                        <Link to="/login">
+                            <button type="button" className="btn btn--primary">Přihlásit se</button>
+                        </Link>
+                        <Link to="/register">
+                            <button type="button" className="btn btn--ghost">Registrovat</button>
+                        </Link>
+                    </div>
+                </section>
+            ) : (
+                <section className="panel stack">
+                    <h2 style={{ margin: 0 }}>Ahoj, {username}</h2>
+                    <div className="hero__cta">
+                        <Link to="/files">
+                            <button type="button" className="btn btn--primary">Moje soubory</button>
+                        </Link>
+                        <Link to="/shares">
+                            <button type="button" className="btn btn--ghost">Moje share linky</button>
+                        </Link>
+                        {role === "ADMIN" ? (
+                            <Link to="/admin/users">
+                                <button type="button" className="btn btn--ghost">Admin panel</button>
+                            </Link>
+                        ) : null}
+                        <button type="button" className="btn btn--danger" onClick={logout}>
+                            Odhlásit se
+                        </button>
+                    </div>
+                </section>
             )}
         </div>
     );
