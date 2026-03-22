@@ -11,13 +11,6 @@ export default function HomePage() {
 
     const [shareCode, setShareCode] = useState("");
 
-    function logout() {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("role");
-        localStorage.removeItem("username");
-        window.location.reload();
-    }
-
     function openShare(e: React.FormEvent) {
         e.preventDefault();
 
@@ -27,63 +20,68 @@ export default function HomePage() {
     }
 
     return (
-        <div className="stack">
+        <div className="home-page">
             <PageHeader
                 title="Sdílení souborů bez chaosu"
-                subtitle="Nahraj, sdílej a spravuj přístupy jednoduše z mobilu i desktopu."
+                subtitle="Nahraj, sdílej a spravuj jednoduše z mobilu i desktopu."
             />
 
-            <section className="panel hero">
-                <form onSubmit={openShare} className="stack">
-                    <label className="stack">
-                        <span>Otevřít sdílený soubor</span>
+            <section className="panel home-panel home-panel--search">
+                <div className="home-panel__header">
+                    <h2 className="home-panel__title">Otevřít sdílený soubor</h2>
+                    <p className="home-panel__hint">Stačí vložit kód sdílení nebo celý odkaz, aplikace si ho sama rozpozná.</p>
+                </div>
+
+                <form onSubmit={openShare} className="home-share-form">
+                    <label className="home-share-field">
+                        <span className="home-share-field__icon" aria-hidden="true" />
                         <input
                             className="field"
-                            placeholder="Vlož share kód nebo celý odkaz"
+                            placeholder="Vlož kód sdílení nebo celý odkaz"
                             value={shareCode}
                             onChange={(e) => setShareCode(e.target.value)}
                         />
                     </label>
 
-                    <div className="hero__cta">
-                        <button type="submit" className="btn btn--primary">
-                            Otevřít sdílení
-                        </button>
-                    </div>
+                    <button type="submit" className="btn btn--contrast">
+                        Otevřít sdílení
+                    </button>
                 </form>
-                <p className="page-subtitle">Tip: stačí vložit i celý link, aplikace si kód vytáhne sama.</p>
             </section>
 
             {!token ? (
-                <section className="panel stack">
-                    <h2 style={{ margin: 0 }}>Začni během minuty</h2>
-                    <div className="hero__cta">
+                <section className="panel home-panel home-panel--welcome">
+                    <div className="stack">
+                        <h2 className="home-panel__title">Začni během minuty</h2>
+                        <p className="page-subtitle">Přihlas se a spravuj vlastní soubory i odkazy ke sdílení z jednoho místa.</p>
+                    </div>
+                    <div className="home-actions">
                         <Link to="/login">
-                            <button type="button" className="btn btn--primary">Přihlásit se</button>
+                            <button type="button" className="btn btn--contrast">Přihlásit se</button>
                         </Link>
                         <Link to="/register">
-                            <button type="button" className="btn btn--ghost">Registrovat</button>
+                            <button type="button" className="btn btn--outline">Registrovat</button>
                         </Link>
                     </div>
                 </section>
             ) : (
-                <section className="panel stack">
-                    <h2 style={{ margin: 0 }}>Ahoj, {username}</h2>
-                    <div className="hero__cta">
+                <section className="panel home-panel home-panel--welcome">
+                    <div className="stack">
+                        <h2 className="home-panel__title">Ahoj, {username}</h2>
+                        <p className="page-subtitle">Spravuj soubory a odkazy ke sdílení.</p>
+                    </div>
+                    <div className="home-actions">
                         <Link to="/files">
-                            <button type="button" className="btn btn--primary">Moje soubory</button>
+                            <button type="button" className="btn btn--contrast">Moje soubory</button>
                         </Link>
                         <Link to="/shares">
-                            <button type="button" className="btn btn--ghost">Moje share linky</button>
+                            <button type="button" className="btn btn--outline">Moje sdílení</button>
                         </Link>
                         {role === "ADMIN" ? (
                             <Link to="/admin/users">
                                 <button type="button" className="btn btn--ghost">Admin panel</button>
                             </Link>
                         ) : null}
-                        <button type="button" className="btn btn--danger" onClick={logout}>
-                            Odhlásit se
-                        </button>
                     </div>
                 </section>
             )}

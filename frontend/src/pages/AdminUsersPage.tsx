@@ -7,6 +7,10 @@ import type { AdminUserDto, Role } from "../types/admin";
 import PageHeader from "../components/PageHeader";
 import { getApiErrorMessage } from "../utils/apiError";
 
+function formatRole(role: Role) {
+    return role === "ADMIN" ? "Administrátor" : "Uživatel";
+}
+
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<AdminUserDto[]>([]);
     const [msg, setMsg] = useState<string | null>(null);
@@ -69,7 +73,7 @@ export default function AdminUsersPage() {
     }
 
     return (
-        <div className="stack">
+        <div className="app-page">
             <PageHeader
                 title="Správa uživatelů"
                 subtitle="Role, přístupy a bezpečnostní zásahy."
@@ -90,72 +94,83 @@ export default function AdminUsersPage() {
                 onClose={() => setMsg(null)}
             />
 
-            <section className="panel table-wrap">
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Role</th>
-                            <th>Enabled</th>
-                            <th>Akce</th>
-                        </tr>
-                    </thead>
+            <section className="panel stack">
+                <div className="panel-header">
+                    <div>
+                        <h2 className="section-title">Uživatelské účty</h2>
+                        <p className="section-subtitle">Měň role, povoluj přístup nebo úplně odstraň účet.</p>
+                    </div>
+                </div>
 
-                    <tbody>
-                        {users.map((u) => {
-                            const isMe = currentUsername === u.username;
+                <div className="table-wrap">
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>Uživatel</th>
+                                <th>Role</th>
+                                <th>Stav</th>
+                                <th>Akce</th>
+                            </tr>
+                        </thead>
 
-                            return (
-                                <tr key={u.id}>
-                                    <td>
-                                        {u.username} {isMe ? "(ty)" : ""}
-                                    </td>
-                                    <td>{u.role}</td>
-                                    <td>{u.enabled ? "ANO" : "NE"}</td>
-                                    <td className="actions">
-                                        <div className="row" style={{ justifyContent: "flex-end" }}>
-                                            <button
-                                                type="button"
-                                                className="btn btn--ghost"
-                                                onClick={() => setRole(u.id, u.role === "ADMIN" ? "USER" : "ADMIN")}
-                                                disabled={isMe && u.role === "ADMIN"}
-                                                title={isMe && u.role === "ADMIN" ? "Nemůžeš si odebrat admin roli" : ""}
-                                            >
-                                                {u.role === "ADMIN" ? "Nastavit USER" : "Nastavit ADMIN"}
-                                            </button>
+                        <tbody>
+                            {users.map((u) => {
+                                const isMe = currentUsername === u.username;
 
-                                            <button
-                                                type="button"
-                                                className="btn btn--ghost"
-                                                onClick={() => setEnabled(u.id, !u.enabled)}
-                                                disabled={isMe && u.enabled}
-                                                title={isMe && u.enabled ? "Nemůžeš zakázat sám sebe" : ""}
-                                            >
-                                                {u.enabled ? "Zakázat" : "Povolit"}
-                                            </button>
+                                return (
+                                    <tr key={u.id}>
+                                        <td>
+                                            {u.username} {isMe ? "(ty)" : ""}
+                                        </td>
+                                        <td>{formatRole(u.role)}</td>
+                                        <td>{u.enabled ? "Povolen" : "Zakázán"}</td>
+                                        <td className="actions">
+                                            <div className="row" style={{ justifyContent: "flex-end" }}>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn--ghost"
+                                                    onClick={() => setRole(u.id, u.role === "ADMIN" ? "USER" : "ADMIN")}
+                                                    disabled={isMe && u.role === "ADMIN"}
+                                                    title={isMe && u.role === "ADMIN" ? "Nemůžeš si odebrat roli administrátora" : ""}
+                                                >
+                                                    {u.role === "ADMIN" ? "Nastavit uživatele" : "Nastavit admina"}
+                                                </button>
 
-                                            <button
-                                                type="button"
-                                                className="btn btn--danger"
-                                                onClick={() => askDelete(u.id)}
-                                                disabled={isMe}
-                                                title={isMe ? "Nemůžeš smazat sám sebe" : ""}
-                                            >
-                                                Smazat
-                                            </button>
-                                        </div>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn--ghost"
+                                                    onClick={() => setEnabled(u.id, !u.enabled)}
+                                                    disabled={isMe && u.enabled}
+                                                    title={isMe && u.enabled ? "Nemůžeš zakázat sám sebe" : ""}
+                                                >
+                                                    {u.enabled ? "Zakázat" : "Povolit"}
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="btn btn--danger"
+                                                    onClick={() => askDelete(u.id)}
+                                                    disabled={isMe}
+                                                    title={isMe ? "Nemůžeš smazat sám sebe" : ""}
+                                                >
+                                                    Smazat
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+
+                            {users.length === 0 ? (
+                                <tr>
+                                    <td colSpan={4}>
+                                        <div className="empty-state">Žádní uživatelé.</div>
                                     </td>
                                 </tr>
-                            );
-                        })}
-
-                        {users.length === 0 ? (
-                            <tr>
-                                <td colSpan={4}>Žádní uživatelé.</td>
-                            </tr>
-                        ) : null}
-                    </tbody>
-                </table>
+                            ) : null}
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <ConfirmDialog

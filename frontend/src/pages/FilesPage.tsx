@@ -94,13 +94,13 @@ export default function FilesPage() {
     }
 
     return (
-        <div className="stack">
+        <div className="app-page">
             <PageHeader
                 title="Moje soubory"
-                subtitle="Nahrávání, stahování a správa souborů."
+                subtitle="Nahrávání, stahování a správa souborů v jednom přehledu."
                 rightSlot={
                     <Link className="link-muted" to="/shares">
-                        Moje share linky
+                        Moje sdílení
                     </Link>
                 }
             />
@@ -112,57 +112,74 @@ export default function FilesPage() {
             />
 
             <section className="panel stack">
+                <div className="panel-header">
+                    <div>
+                        <h2 className="section-title">Nahrát nový soubor</h2>
+                    </div>
+                </div>
+
                 <div className="row">
                     <input type="file" onChange={onUpload} disabled={busy} />
                     {busy ? <span className="page-subtitle">Nahrávám…</span> : null}
                 </div>
             </section>
 
-            <section className="panel table-wrap">
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            <th>Název</th>
-                            <th>Typ</th>
-                            <th>Velikost</th>
-                            <th>Akce</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {files.map((f) => (
-                            <tr key={f.id}>
-                                <td>
-                                    <Link to={`/files/${f.id}`}>{f.originalName}</Link>
-                                </td>
-                                <td>{f.contentType}</td>
-                                <td>{f.size} B</td>
-                                <td className="actions">
-                                    <div className="row" style={{ justifyContent: "flex-end" }}>
-                                        <button
-                                            type="button"
-                                            className="btn btn--ghost"
-                                            onClick={() => downloadFile(f.id)}
-                                        >
-                                            Stáhnout
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn--danger"
-                                            onClick={() => askDelete(f.id)}
-                                        >
-                                            Smazat
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        {files.length === 0 ? (
+            <section className="panel stack">
+                <div className="panel-header">
+                    <div>
+                        <h2 className="section-title">Přehled souborů</h2>
+                        <p className="section-subtitle">Kliknutím na název otevřeš detail, sdílení a metadata.</p>
+                    </div>
+                </div>
+
+                <div className="table-wrap">
+                    <table className="data-table">
+                        <thead>
                             <tr>
-                                <td colSpan={4}>Zatím tu nic není.</td>
+                                <th>Název</th>
+                                <th>Typ</th>
+                                <th>Velikost</th>
+                                <th>Akce</th>
                             </tr>
-                        ) : null}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {files.map((f) => (
+                                <tr key={f.id}>
+                                    <td>
+                                        <Link to={`/files/${f.id}`}>{f.originalName}</Link>
+                                    </td>
+                                    <td>{f.contentType}</td>
+                                    <td>{f.size} B</td>
+                                    <td className="actions">
+                                        <div className="row" style={{ justifyContent: "flex-end" }}>
+                                            <button
+                                                type="button"
+                                                className="btn btn--ghost"
+                                                onClick={() => downloadFile(f.id)}
+                                            >
+                                                Stáhnout
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn--danger"
+                                                onClick={() => askDelete(f.id)}
+                                            >
+                                                Smazat
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {files.length === 0 ? (
+                                <tr>
+                                    <td colSpan={4}>
+                                        <div className="empty-state">Zatím tu nic není.</div>
+                                    </td>
+                                </tr>
+                            ) : null}
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <ConfirmDialog

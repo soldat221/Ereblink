@@ -9,6 +9,19 @@ import type { ShareListItemDto } from "../types/shares";
 import PageHeader from "../components/PageHeader";
 import { getApiErrorMessage } from "../utils/apiError";
 
+function formatAccessType(accessType: string) {
+    switch (accessType) {
+    case "PUBLIC":
+        return "Veřejné";
+    case "USER_ONLY":
+        return "Jeden uživatel";
+    case "LIST":
+        return "Seznam uživatelů";
+    default:
+        return accessType;
+    }
+}
+
 export default function FileDetailPage() {
     const { id } = useParams();
     const nav = useNavigate();
@@ -99,7 +112,7 @@ export default function FileDetailPage() {
         try {
             await apiClient.delete(`/shares/${shareToDeleteId}`);
             await loadShares();
-            setShareMsg("Share smazán");
+            setShareMsg("Sdílení smazáno");
         } catch (e: unknown) {
             setShareMsg(getApiErrorMessage(e, "Smazání selhalo"));
         } finally {
@@ -108,7 +121,7 @@ export default function FileDetailPage() {
     }
 
     return (
-        <div className="stack">
+        <div className="app-page">
             <PageHeader
                 title="Detail souboru"
                 subtitle="Metadata, akce a správa sdílení na jednom místě."
@@ -126,6 +139,13 @@ export default function FileDetailPage() {
             ) : (
                 <>
                     <section className="panel stack">
+                        <div className="panel-header">
+                            <div>
+                                <h2 className="section-title">Základní informace</h2>
+                                <p className="section-subtitle">Detail souboru včetně vlastníka, velikosti a času vytvoření.</p>
+                            </div>
+                        </div>
+
                         <div className="meta-list">
                             <div>
                                 <b>Název:</b> <span>{detail.originalName}</span>
@@ -158,15 +178,20 @@ export default function FileDetailPage() {
                     </section>
 
                     <section className="panel stack">
-                        <h3 style={{ margin: 0 }}>Share linky</h3>
+                        <div className="panel-header">
+                            <div>
+                                <h2 className="section-title">Sdílení souboru</h2>
+                                <p className="section-subtitle">Přehled všech aktivních přístupů a rychlé kopírování odkazů.</p>
+                            </div>
+                        </div>
                         <ApiAlert
-                            type={shareMsg === "Share smazán" || shareMsg === "Odkaz zkopírován" ? "success" : "error"}
+                            type={shareMsg === "Sdílení smazáno" || shareMsg === "Odkaz zkopírován" ? "success" : "error"}
                             message={shareMsg}
                             onClose={() => setShareMsg(null)}
                         />
 
                         {shares.length === 0 ? (
-                            <div className="page-subtitle">Zatím žádné share linky.</div>
+                            <div className="empty-state">Zatím žádná aktivní sdílení.</div>
                         ) : (
                             <div className="table-wrap">
                                 <table className="data-table">
@@ -181,7 +206,7 @@ export default function FileDetailPage() {
                                     <tbody>
                                         {shares.map((s) => (
                                             <tr key={s.id}>
-                                                <td>{s.accessType}</td>
+                                                <td>{formatAccessType(s.accessType)}</td>
                                                 <td>{s.code}</td>
                                                 <td>{s.expiresAt ? new Date(s.expiresAt).toLocaleString() : "bez expirace"}</td>
                                                 <td className="actions">
@@ -212,8 +237,8 @@ export default function FileDetailPage() {
 
                     <ConfirmDialog
                         open={shareDeleteOpen}
-                        title="Smazat share?"
-                        text="Opravdu chceš share smazat? Přístup přes kód přestane fungovat."
+                        title="Smazat sdílení?"
+                        text="Opravdu chceš sdílení smazat? Přístup přes kód přestane fungovat."
                         onCancel={() => setShareDeleteOpen(false)}
                         onConfirm={confirmDeleteShare}
                     />

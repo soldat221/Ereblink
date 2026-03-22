@@ -12,9 +12,11 @@ export default function ConfirmDialog({ open, title, text, onConfirm, onCancel }
     return (
         <div className="dialog-backdrop" role="presentation">
             <div className="dialog" role="dialog" aria-modal="true" aria-label={title}>
-                <h3>{title}</h3>
-                <p>{text}</p>
-                <div className="row" style={{ justifyContent: "flex-end" }}>
+                <div className="dialog__header">
+                    <h3 className="dialog__title">{title}</h3>
+                </div>
+                <p className="dialog__text">{text}</p>
+                <div className="dialog__actions">
                     <button type="button" className="btn btn--ghost" onClick={onCancel}>
                         Zrušit
                     </button>

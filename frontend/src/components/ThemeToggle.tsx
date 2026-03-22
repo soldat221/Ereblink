@@ -6,11 +6,12 @@ type Props = {
 };
 
 export default function ThemeToggle({ theme, onToggle }: Props) {
-    const nextLabel = theme === "light" ? "Dark mode" : "Light mode";
+    const nextLabel = theme === "light" ? "Tmavý režim" : "Světlý režim";
 
     return (
-        <button type="button" className="btn btn--ghost" onClick={onToggle} aria-label={nextLabel}>
-            {nextLabel}
+        <button type="button" className="theme-toggle" onClick={onToggle} aria-label={nextLabel}>
+            <span className="theme-toggle__icon" aria-hidden="true" />
+            <span>{nextLabel}</span>
         </button>
     );
 }

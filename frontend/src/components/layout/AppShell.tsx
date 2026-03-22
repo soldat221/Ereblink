@@ -25,8 +25,8 @@ export default function AppShell() {
     const userNav: NavItem[] = [
         { to: "/", label: "Domů" },
         { to: "/files", label: "Soubory" },
-        { to: "/shares", label: "Share linky" },
-        ...(role === "ADMIN" ? [{ to: "/admin/users", label: "Admin" }] : []),
+        { to: "/shares", label: "Sdílení" },
+        ...(role === "ADMIN" ? [{ to: "/admin/users", label: "Administrace" }] : []),
     ];
 
     function logout() {
@@ -43,46 +43,52 @@ export default function AppShell() {
         <div className="app-shell">
             <header className="app-shell__header">
                 <div className="container app-shell__header-content">
-                    <button
-                        type="button"
-                        className="brand"
-                        onClick={() => navigate("/")}
-                        aria-label="Přejít na domovskou stránku"
-                    >
-                        <img src={logo} alt="Ereblink" className="brand__logo" />
-                        <div>
-                            <div className="brand__name">Ereblink</div>
-                        </div>
-                    </button>
-
-                    {token && (
-                        <div className="app-shell__userbar">
-                            <span className="pill">{username}</span>
-                            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-                            <button type="button" className="btn btn--ghost" onClick={logout}>Odhlásit</button>
-                        </div>
-                    )}
-                    {!token && (
-                        <div className="app-shell__userbar">
-                            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-                        </div>
-                    )}
-                </div>
-
-                <div className="container">
-                    <nav className="app-shell__nav" aria-label="Hlavní navigace">
-                        {navItems.map((item) => (
-                            <NavLink
-                                key={item.to}
-                                to={item.to}
-                                className={({ isActive }) =>
-                                    `app-shell__nav-link${isActive ? " app-shell__nav-link--active" : ""}`
-                                }
+                    <div className="app-shell__header-panel">
+                        <div className="app-shell__left">
+                            <button
+                                type="button"
+                                className="brand"
+                                onClick={() => navigate("/")}
+                                aria-label="Přejít na domovskou stránku"
                             >
-                                {item.label}
-                            </NavLink>
-                        ))}
-                    </nav>
+                                <img src={logo} alt="Ereblink" className="brand__logo" />
+                                <div>
+                                    <div className="brand__name">Ereblink</div>
+                                </div>
+                            </button>
+
+                            <nav className="app-shell__nav" aria-label="Hlavní navigace">
+                                {navItems.map((item) => (
+                                    <NavLink
+                                        key={item.to}
+                                        to={item.to}
+                                        className={({ isActive }) =>
+                                            `app-shell__nav-link${isActive ? " app-shell__nav-link--active" : ""}`
+                                        }
+                                    >
+                                        {item.label}
+                                    </NavLink>
+                                ))}
+                            </nav>
+                        </div>
+
+                        <div className="app-shell__userbar">
+                            {token ? (
+                                <div className="app-shell__account">
+                                    <span className="app-shell__avatar" aria-hidden="true">
+                                        {username?.charAt(0).toUpperCase() ?? "U"}
+                                    </span>
+                                    <span className="app-shell__account-name">{username}</span>
+                                </div>
+                            ) : null}
+                            <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                            {token ? (
+                                <button type="button" className="app-shell__signout" onClick={logout}>
+                                    Odhlásit se
+                                </button>
+                            ) : null}
+                        </div>
+                    </div>
                 </div>
             </header>
 

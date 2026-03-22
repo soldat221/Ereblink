@@ -33,28 +33,34 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="stack auth-card">
-            <PageHeader title="Přihlášení" subtitle="Přístup ke správě souborů a sdílení." />
+        <div className="app-page app-page--narrow auth-card">
+            <PageHeader title="Přihlášení" subtitle="Přístup ke správě souborů, sdílení a detailům přístupu." />
             <section className="panel stack">
                 <ApiAlert type="error" message={msg} onClose={() => setMsg(null)} />
 
                 <form onSubmit={onSubmit} className="stack">
-                    <input
-                        className="field"
-                        placeholder="username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        autoComplete="username"
-                    />
-                    <input
-                        className="field"
-                        placeholder="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        autoComplete="current-password"
-                    />
-                    <button type="submit" className="btn btn--primary">Přihlásit</button>
+                    <label className="stack">
+                        <span>Uživatelské jméno</span>
+                        <input
+                            className="field"
+                            placeholder="Zadej jméno"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            autoComplete="username"
+                        />
+                    </label>
+                    <label className="stack">
+                        <span>Heslo</span>
+                        <input
+                            className="field"
+                            placeholder="Zadej heslo"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            autoComplete="current-password"
+                        />
+                    </label>
+                    <button type="submit" className="btn btn--primary">Přihlásit se</button>
                 </form>
 
                 <Link className="link-muted" to="/register">

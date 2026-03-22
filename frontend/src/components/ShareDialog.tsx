@@ -27,6 +27,19 @@ type CreateSharePayload = {
     allowedUsernames?: string[];
 };
 
+function formatAccessType(accessType: AccessType) {
+    switch (accessType) {
+    case "PUBLIC":
+        return "Veřejné";
+    case "USER_ONLY":
+        return "Pouze pro jednoho uživatele";
+    case "LIST":
+        return "Pouze pro seznam uživatelů";
+    default:
+        return accessType;
+    }
+}
+
 export default function ShareDialog({ open, fileId, onClose, onCreated }: Props) {
     const [accessType, setAccessType] = useState<AccessType>("PUBLIC");
     const [expiresInHours, setExpiresInHours] = useState<string>("24");
@@ -73,10 +86,10 @@ export default function ShareDialog({ open, fileId, onClose, onCreated }: Props)
 
             const res = await apiClient.post<ShareCreatedResponse>("/shares", payload);
             setCreated(res.data);
-            setMsg("Share vytvořen");
+            setMsg("Sdílení vytvořeno");
             onCreated?.();
         } catch (e: unknown) {
-            setMsg(getApiErrorMessage(e, "Nepodařilo se vytvořit share"));
+            setMsg(getApiErrorMessage(e, "Nepodařilo se vytvořit sdílení"));
         } finally {
             setBusy(false);
         }
@@ -91,16 +104,16 @@ export default function ShareDialog({ open, fileId, onClose, onCreated }: Props)
     return (
         <div className="dialog-backdrop" role="presentation">
             <div className="dialog" role="dialog" aria-modal="true" aria-label="Sdílet soubor">
-                <div className="row" style={{ justifyContent: "space-between" }}>
-                    <h3 style={{ margin: 0 }}>Sdílet soubor</h3>
+                <div className="dialog__header">
+                    <h3 className="dialog__title">Sdílet soubor</h3>
                     <button type="button" className="btn btn--ghost" onClick={onClose}>
                         Zavřít
                     </button>
                 </div>
 
-                <div className="stack" style={{ marginTop: "0.9rem" }}>
+                <div className="stack dialog__body">
                     <ApiAlert
-                        type={msg === "Share vytvořen" || msg === "Odkaz zkopírován" ? "success" : "error"}
+                        type={msg === "Sdílení vytvořeno" || msg === "Odkaz zkopírován" ? "success" : "error"}
                         message={msg}
                         onClose={() => setMsg(null)}
                     />
@@ -116,9 +129,10 @@ export default function ShareDialog({ open, fileId, onClose, onCreated }: Props)
 
                     {accessType === "USER_ONLY" ? (
                         <label className="stack">
-                            <span>Povolený uživatel (username)</span>
+                            <span>Povolený uživatel</span>
                             <input
                                 className="field"
+                                placeholder="Např. jan.novak"
                                 value={allowedUsername}
                                 onChange={(e) => setAllowedUsername(e.target.value)}
                             />
@@ -127,24 +141,24 @@ export default function ShareDialog({ open, fileId, onClose, onCreated }: Props)
 
                     {accessType === "LIST" ? (
                         <label className="stack">
-                            <span>Povolení uživatelé (username, oddělené čárkou)</span>
+                            <span>Povolení uživatelé (oddělené čárkou)</span>
                             <input
                                 className="field"
-                                placeholder="alice,bob,charlie"
+                                placeholder="alice, bob, charlie"
                                 value={allowedUsernames}
                                 onChange={(e) => setAllowedUsernames(e.target.value)}
                             />
                         </label>
                     ) : null}
 
-                    <label className="row">
+                    <label className="checkbox-row">
                         <input type="checkbox" checked={noExpiry} onChange={(e) => setNoExpiry(e.target.checked)} />
                         <span>Bez expirace</span>
                     </label>
 
                     {!noExpiry ? (
                         <label className="stack">
-                            <span>Expirace (v hodinách)</span>
+                            <span>Expirace v hodinách</span>
                             <input
                                 className="field"
                                 value={expiresInHours}
@@ -153,7 +167,7 @@ export default function ShareDialog({ open, fileId, onClose, onCreated }: Props)
                         </label>
                     ) : null}
 
-                    <div className="row" style={{ justifyContent: "flex-end" }}>
+                    <div className="dialog__actions">
                         <button type="button" className="btn btn--ghost" onClick={onClose} disabled={busy}>
                             Zavřít
                         </button>
@@ -163,9 +177,12 @@ export default function ShareDialog({ open, fileId, onClose, onCreated }: Props)
                     </div>
 
                     {created ? (
-                        <div className="panel stack">
+                        <div className="panel stack share-result">
                             <div>
                                 <b>Kód:</b> {created.code}
+                            </div>
+                            <div>
+                                <b>Typ přístupu:</b> {formatAccessType(created.accessType)}
                             </div>
                             <div>
                                 <b>Odkaz:</b> {shareUrl}

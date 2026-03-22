@@ -7,6 +7,19 @@ import type { ShareListItemDto } from "../types/shares";
 import PageHeader from "../components/PageHeader";
 import { getApiErrorMessage } from "../utils/apiError";
 
+function formatAccessType(accessType: string) {
+    switch (accessType) {
+    case "PUBLIC":
+        return "Veřejné";
+    case "USER_ONLY":
+        return "Jeden uživatel";
+    case "LIST":
+        return "Seznam uživatelů";
+    default:
+        return accessType;
+    }
+}
+
 export default function MySharesPage() {
     const [items, setItems] = useState<ShareListItemDto[]>([]);
     const [msg, setMsg] = useState<string | null>(null);
@@ -20,7 +33,7 @@ export default function MySharesPage() {
     }
 
     useEffect(() => {
-        load().catch((e: unknown) => setMsg(getApiErrorMessage(e, "Chyba při načítání share linků")));
+        load().catch((e: unknown) => setMsg(getApiErrorMessage(e, "Chyba při načítání sdílení")));
     }, []);
 
     function shareUrl(code: string) {
@@ -40,7 +53,7 @@ export default function MySharesPage() {
         try {
             await apiClient.delete(`/shares/${toDeleteId}`);
             await load();
-            setMsg("Share smazán");
+            setMsg("Sdílení smazáno");
         } catch (e: unknown) {
             setMsg(getApiErrorMessage(e, "Smazání selhalo"));
         } finally {
@@ -54,10 +67,10 @@ export default function MySharesPage() {
     }
 
     return (
-        <div className="stack">
+        <div className="app-page">
             <PageHeader
-                title="Moje share linky"
-                subtitle="Přehled všech sdílení a rychlé kopírování odkazů."
+                title="Moje sdílení"
+                subtitle="Přehled všech odkazů, expirací a typů přístupu."
                 rightSlot={
                     <Link className="link-muted" to="/files">
                         Zpět na soubory
@@ -66,64 +79,75 @@ export default function MySharesPage() {
             />
 
             <ApiAlert
-                type={msg === "Share smazán" || msg === "Odkaz zkopírován" ? "success" : "error"}
+                type={msg === "Sdílení smazáno" || msg === "Odkaz zkopírován" ? "success" : "error"}
                 message={msg}
                 onClose={() => setMsg(null)}
             />
 
-            <section className="panel table-wrap">
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            <th>Soubor</th>
-                            <th>Typ</th>
-                            <th>Kód</th>
-                            <th>Expirace</th>
-                            <th>Akce</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {items.map((s) => (
-                            <tr key={s.id}>
-                                <td>
-                                    <Link to={`/files/${s.fileId}`}>{s.fileName}</Link>
-                                </td>
-                                <td>{s.accessType}</td>
-                                <td>{s.code}</td>
-                                <td>{s.expiresAt ? new Date(s.expiresAt).toLocaleString() : "bez expirace"}</td>
-                                <td className="actions">
-                                    <div className="row" style={{ justifyContent: "flex-end" }}>
-                                        <button
-                                            type="button"
-                                            className="btn btn--ghost"
-                                            onClick={() => copyLink(s.code)}
-                                        >
-                                            Kopírovat
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn--danger"
-                                            onClick={() => askDelete(s.id)}
-                                        >
-                                            Smazat
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        {items.length === 0 ? (
+            <section className="panel stack">
+                <div className="panel-header">
+                    <div>
+                        <h2 className="section-title">Aktivní sdílení</h2>
+                        <p className="section-subtitle">Odkazy můžeš rychle kopírovat nebo okamžitě zrušit.</p>
+                    </div>
+                </div>
+
+                <div className="table-wrap">
+                    <table className="data-table">
+                        <thead>
                             <tr>
-                                <td colSpan={5}>Zatím nemáš žádné share linky.</td>
+                                <th>Soubor</th>
+                                <th>Typ</th>
+                                <th>Kód</th>
+                                <th>Expirace</th>
+                                <th>Akce</th>
                             </tr>
-                        ) : null}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {items.map((s) => (
+                                <tr key={s.id}>
+                                    <td>
+                                        <Link to={`/files/${s.fileId}`}>{s.fileName}</Link>
+                                    </td>
+                                    <td>{formatAccessType(s.accessType)}</td>
+                                    <td>{s.code}</td>
+                                    <td>{s.expiresAt ? new Date(s.expiresAt).toLocaleString() : "bez expirace"}</td>
+                                    <td className="actions">
+                                        <div className="row" style={{ justifyContent: "flex-end" }}>
+                                            <button
+                                                type="button"
+                                                className="btn btn--ghost"
+                                                onClick={() => copyLink(s.code)}
+                                            >
+                                                Kopírovat
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn--danger"
+                                                onClick={() => askDelete(s.id)}
+                                            >
+                                                Smazat
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {items.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5}>
+                                        <div className="empty-state">Zatím nemáš žádná aktivní sdílení.</div>
+                                    </td>
+                                </tr>
+                            ) : null}
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <ConfirmDialog
                 open={confirmOpen}
-                title="Smazat share?"
-                text="Opravdu chceš share smazat? Přístup přes kód přestane fungovat."
+                title="Smazat sdílení?"
+                text="Opravdu chceš sdílení smazat? Přístup přes kód přestane fungovat."
                 onCancel={() => setConfirmOpen(false)}
                 onConfirm={confirmDelete}
             />

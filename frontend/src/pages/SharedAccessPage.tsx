@@ -33,9 +33,9 @@ export default function SharedAccessPage() {
             setMode("public");
             return;
         } catch (e: unknown) {
-            const m = getApiErrorMessage(e, "Share nelze načíst");
+            const m = getApiErrorMessage(e, "Sdílení nelze načíst");
             if (!token) {
-                setMsg(`${m} (Pokud je share omezený, přihlas se.)`);
+                setMsg(`${m} (Pokud je sdílení omezené, přihlas se.)`);
                 return;
             }
         }
@@ -45,7 +45,7 @@ export default function SharedAccessPage() {
             setInfo(res.data);
             setMode("auth");
         } catch (e: unknown) {
-            setMsg(getApiErrorMessage(e, "Share nelze načíst"));
+            setMsg(getApiErrorMessage(e, "Sdílení nelze načíst"));
         }
     }, [code, token]);
 
@@ -80,20 +80,32 @@ export default function SharedAccessPage() {
     }
 
     return (
-        <div className="stack">
+        <div className="app-page app-page--narrow">
             <PageHeader title="Sdílený soubor" subtitle="Přístup přes veřejný nebo autorizovaný režim." />
             <ApiAlert type={msg ? "error" : "info"} message={msg} onClose={() => setMsg(null)} />
 
             {!token ? (
-                <section className="panel">
-                    Nejsi přihlášený. <Link to="/login">Přihlásit se</Link> (pokud je share omezený).
+                <section className="panel stack">
+                    <div className="section-title">Přístup bez přihlášení</div>
+                    <div className="section-subtitle">
+                        Nejsi přihlášený. <Link to="/login">Přihlas se</Link>, pokud je sdílení omezené na účet.
+                    </div>
                 </section>
             ) : null}
 
             {!info ? (
-                <section className="panel">Načítám…</section>
+                <section className="panel">
+                    <div className="empty-state">Načítám informace o souboru…</div>
+                </section>
             ) : (
                 <section className="panel stack">
+                    <div className="panel-header">
+                        <div>
+                            <h2 className="section-title">Detaily sdílení</h2>
+                            <p className="section-subtitle">Stáhni si soubor nebo si ověř parametry sdílení.</p>
+                        </div>
+                    </div>
+
                     <div className="meta-list">
                         <div>
                             <b>Soubor:</b> <span>{info.originalName}</span>
@@ -118,7 +130,7 @@ export default function SharedAccessPage() {
                         <button type="button" className="btn btn--primary" onClick={download}>
                             Stáhnout
                         </button>
-                        <span className="pill">Režim: {mode === "public" ? "veřejný" : "autentizovaný"}</span>
+                        <span className="pill">Režim: {mode === "public" ? "veřejný" : "autorizovaný"}</span>
                     </div>
                 </section>
             )}
