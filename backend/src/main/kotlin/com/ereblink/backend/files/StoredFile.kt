@@ -28,6 +28,9 @@ class StoredFile(
     @Column(nullable = false)
     var data: ByteArray,
 
+    // soft-deaktivace souboru; null = aktivní
+    var deactivatedAt: Instant? = null,
+
     @Column(nullable = false)
     var createdAt: Instant = Instant.now()
 )

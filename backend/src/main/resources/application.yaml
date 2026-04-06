@@ -34,3 +34,7 @@ app:
     issuer: "fileshare"
     secret: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_AT_LEAST_32_CHARS"
     accessTokenMinutes: 60
+  shares:
+    # každou hodinu deaktivuj linky, které expirovaly před víc než 24 hodinami
+    # v čase xx:05:00
+    cleanup-cron: "0 5 * * * *"

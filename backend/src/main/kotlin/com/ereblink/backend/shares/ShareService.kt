@@ -8,10 +8,12 @@ import com.ereblink.backend.shares.dto.ShareCreatedResponse
 import com.ereblink.backend.shares.dto.PublicShareInfoResponse
 import com.ereblink.backend.shares.dto.ShareListItemDto
 import com.ereblink.backend.users.UserRepository
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.Base64
 
 data class PublicDownload(
@@ -39,12 +41,8 @@ class ShareService(
 
     @Transactional
     fun createShare(currentUsername: String, req: CreateShareRequest): ShareCreatedResponse {
-        val file = storedFileRepository.findById(req.fileId)
-            .orElseThrow { IllegalArgumentException("Soubor nenalezen") }
-
-        if (file.owner.username != currentUsername) {
-            throw IllegalArgumentException("Nemáš oprávnění sdílet tento soubor")
-        }
+        val file = storedFileRepository.findByIdAndOwnerUsernameAndDeactivatedAtIsNull(req.fileId, currentUsername)
+            ?: throw IllegalArgumentException("Soubor nenalezen")
 
         val creator = userRepository.findByUsername(currentUsername)
             ?: throw IllegalArgumentException("Uživatel neexistuje")
@@ -106,8 +104,11 @@ class ShareService(
 
     @Transactional(readOnly = true)
     fun listSharesForFile(currentUsername: String, fileId: Long): List<ShareListItemDto> {
-        // jen share linky souboru, které vytvořil aktuální uživatel (vlastník souboru)
-        val shares = shareLinkRepository.findAllByFileIdAndCreatedByUsernameOrderByCreatedAtDesc(fileId, currentUsername)
+        storedFileRepository.findByIdAndOwnerUsernameAndDeactivatedAtIsNull(fileId, currentUsername)
+            ?: throw IllegalArgumentException("Soubor nenalezen")
+
+        val shares = shareLinkRepository
+            .findAllByFileIdAndCreatedByUsernameAndDeactivatedAtIsNullAndFileDeactivatedAtIsNullOrderByCreatedAtDesc(fileId, currentUsername)
 
         return shares.map { s ->
             ShareListItemDto(
@@ -124,7 +125,8 @@ class ShareService(
 
     @Transactional(readOnly = true)
     fun listMyShares(currentUsername: String): List<ShareListItemDto> {
-        val shares = shareLinkRepository.findAllByCreatedByUsernameOrderByCreatedAtDesc(currentUsername)
+        val shares = shareLinkRepository
+            .findAllByCreatedByUsernameAndDeactivatedAtIsNullAndFileDeactivatedAtIsNullOrderByCreatedAtDesc(currentUsername)
         return shares.map { s ->
             ShareListItemDto(
                 id = s.id!!,
@@ -140,23 +142,33 @@ class ShareService(
 
     @Transactional
     fun deleteShare(currentUsername: String, shareId: Long) {
-        val share = shareLinkRepository.findById(shareId)
-            .orElseThrow { IllegalArgumentException("Share nenalezen") }
+        val share = shareLinkRepository.findByIdAndDeactivatedAtIsNull(shareId)
+            ?: throw IllegalArgumentException("Share nenalezen")
 
         // mazat může jen ten, kdo ho vytvořil (typicky vlastník souboru)
         if (share.createdBy.username != currentUsername) {
             throw IllegalArgumentException("Nemáš oprávnění smazat tento share")
         }
 
-        downloadLogRepository.deleteAllByShareLinkId(shareId)
-        sharePermissionRepository.deleteAllByShareLinkId(shareId)
-        shareLinkRepository.delete(share)
+        share.deactivatedAt = Instant.now()
+    }
+
+    @Scheduled(cron = "\${app.shares.cleanup-cron:0 5 * * * *}")
+    @Transactional
+    fun deactivateExpiredSharesPastGracePeriod() {
+        val now = Instant.now()
+        val cutoff = now.minus(1, ChronoUnit.DAYS)
+        val expiredShares = shareLinkRepository
+            .findAllByExpiresAtLessThanEqualAndDeactivatedAtIsNull(cutoff)
+
+        if (expiredShares.isEmpty()) return
+
+        expiredShares.forEach { it.deactivatedAt = now }
     }
 
     @Transactional(readOnly = true)
     fun getPublicInfo(code: String): PublicShareInfoResponse {
-        val share = shareLinkRepository.findByCode(code)
-            ?: throw IllegalArgumentException("Share nenalezen")
+        val share = findActiveShareByCode(code)
 
         if (share.accessType != AccessType.PUBLIC) {
             throw IllegalArgumentException("Tento share není veřejný")
@@ -179,8 +191,7 @@ class ShareService(
 
     @Transactional
     fun publicDownload(code: String, ip: String?, userAgent: String?): PublicDownload {
-        val share = shareLinkRepository.findByCode(code)
-            ?: throw IllegalArgumentException("Share nenalezen")
+        val share = findActiveShareByCode(code)
 
         if (share.accessType != AccessType.PUBLIC) {
             throw IllegalArgumentException("Tento share není veřejný")
@@ -210,8 +221,7 @@ class ShareService(
 
     @Transactional(readOnly = true)
     fun getInfoForUser(code: String, currentUsername: String): PublicShareInfoResponse {
-        val share = shareLinkRepository.findByCode(code)
-            ?: throw IllegalArgumentException("Share nenalezen")
+        val share = findActiveShareByCode(code)
 
         if (share.isExpired()) throw IllegalArgumentException("Share expiroval")
 
@@ -244,8 +254,7 @@ class ShareService(
 
     @Transactional
     fun downloadForUser(code: String, currentUsername: String, ip: String?, userAgent: String?): PublicDownload {
-        val share = shareLinkRepository.findByCode(code)
-            ?: throw IllegalArgumentException("Share nenalezen")
+        val share = findActiveShareByCode(code)
 
         if (share.isExpired()) throw IllegalArgumentException("Share expiroval")
 
@@ -286,4 +295,8 @@ class ShareService(
             bytes = file.data
         )
     }
+
+    private fun findActiveShareByCode(code: String): ShareLink =
+        shareLinkRepository.findByCodeAndDeactivatedAtIsNullAndFileDeactivatedAtIsNull(code)
+            ?: throw IllegalArgumentException("Share nenalezen")
 }

@@ -37,6 +37,9 @@ class ShareLink(
     // expirace; null = bez expirace
     var expiresAt: Instant? = null,
 
+    // soft-deaktivace po grace period; null = aktivní
+    var deactivatedAt: Instant? = null,
+
     @Column(nullable = false)
     var createdAt: Instant = Instant.now()
 ) {

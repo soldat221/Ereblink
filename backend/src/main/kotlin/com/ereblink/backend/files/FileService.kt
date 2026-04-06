@@ -2,15 +2,13 @@ package com.ereblink.backend.files
 
 import com.ereblink.backend.auth.dto.FileDetailDto
 import com.ereblink.backend.auth.dto.FileItemDto
-import com.ereblink.backend.logs.DownloadLogRepository
 import com.ereblink.backend.shares.ShareLinkRepository
-import com.ereblink.backend.shares.SharePermissionRepository
 import com.ereblink.backend.users.UserRepository
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
-import java.io.ByteArrayOutputStream
+import java.time.Instant
 
 data class FileDownload(
     val filename: String,
@@ -22,9 +20,7 @@ data class FileDownload(
 class FileService(
     private val storedFileRepository: StoredFileRepository,
     private val userRepository: UserRepository,
-    private val shareLinkRepository: ShareLinkRepository,
-    private val sharePermissionRepository: SharePermissionRepository,
-    private val downloadLogRepository: DownloadLogRepository,
+    private val shareLinkRepository: ShareLinkRepository
 ) {
 
     @Transactional
@@ -52,7 +48,7 @@ class FileService(
 
     @Transactional(readOnly = true)
     fun listMine(currentUsername: String): List<FileItemDto> =
-        storedFileRepository.findAllByOwnerUsernameOrderByCreatedAtDesc(currentUsername)
+        storedFileRepository.findAllByOwnerUsernameAndDeactivatedAtIsNullOrderByCreatedAtDesc(currentUsername)
             .map {
                 FileItemDto(
                     id = it.id!!,
@@ -65,12 +61,8 @@ class FileService(
 
     @Transactional(readOnly = true)
     fun downloadMine(currentUsername: String, id: Long): FileDownload {
-        val f = storedFileRepository.findById(id)
-            .orElseThrow { IllegalArgumentException("Soubor nenalezen") }
-
-        if (f.owner.username != currentUsername) {
-            throw IllegalArgumentException("Nemáš oprávnění k tomuto souboru")
-        }
+        val f = storedFileRepository.findByIdAndOwnerUsernameAndDeactivatedAtIsNull(id, currentUsername)
+            ?: throw IllegalArgumentException("Soubor nenalezen")
 
         return FileDownload(
             filename = f.originalName,
@@ -81,35 +73,21 @@ class FileService(
 
     @Transactional
     fun deleteMine(currentUsername: String, id: Long) {
-        val f = storedFileRepository.findById(id)
-            .orElseThrow { IllegalArgumentException("Soubor nenalezen") }
+        val f = storedFileRepository.findByIdAndOwnerUsernameAndDeactivatedAtIsNull(id, currentUsername)
+            ?: throw IllegalArgumentException("Soubor nenalezen")
 
-        if (f.owner.username != currentUsername) {
-            throw IllegalArgumentException("Nemáš oprávnění k tomuto souboru")
-        }
+        val now = Instant.now()
 
-        val shares = shareLinkRepository.findAllByFileIdOrderByCreatedAtDesc(id)
+        val shares = shareLinkRepository.findAllByFileIdAndDeactivatedAtIsNullOrderByCreatedAtDesc(id)
+        shares.forEach { it.deactivatedAt = now }
 
-        shares.forEach { s ->
-            val shareId = s.id!!
-            downloadLogRepository.deleteAllByShareLinkId(shareId)
-            sharePermissionRepository.deleteAllByShareLinkId(shareId)
-            shareLinkRepository.delete(s)
-        }
-
-        downloadLogRepository.deleteAllByFileId(id)
-
-        storedFileRepository.delete(f)
+        f.deactivatedAt = now
     }
 
     @Transactional(readOnly = true)
     fun getMineDetail(currentUsername: String, id: Long): FileDetailDto {
-        val f = storedFileRepository.findById(id)
-            .orElseThrow { IllegalArgumentException("Soubor nenalezen") }
-
-        if (f.owner.username != currentUsername) {
-            throw IllegalArgumentException("Nemáš oprávnění k tomuto souboru")
-        }
+        val f = storedFileRepository.findByIdAndOwnerUsernameAndDeactivatedAtIsNull(id, currentUsername)
+            ?: throw IllegalArgumentException("Soubor nenalezen")
 
         return FileDetailDto(
             id = f.id!!,
